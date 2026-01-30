@@ -1,0 +1,37 @@
+# -*- coding: utf-8 -*-
+"""
+Ablation experiment base configuration.
+"""
+
+# ============================================================================
+# Base Configuration
+# ============================================================================
+
+# Component switches
+use_multistep: true
+use_bdf_loss: true
+backbone_type: 'mamba'
+use_causal_weight: true
+
+# Hyperparameters
+k_steps: 2
+bdf_order: 2
+epsilon: 0.05
+
+# Training parameters (aligned with main config)
+n_epochs: 500
+batch_size: 32
+learning_rate: 0.001
+
+# Model parameters
+hidden_dim: 64
+num_layers: 4
+
+# Data parameters
+n_grid: 128
+dt: 0.0025
+nu: 0.003183098861837907  # 0.01/π
+
+# Experiment parameters
+seeds: [42, 123, 456]
+device: 'auto'

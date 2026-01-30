@@ -1,0 +1,207 @@
+
+# 运行模式: fast (快速验证), standard (标准), full (完整实验)
+mode: "fast"
+
+# =========================================
+# 快速验证模式参数 
+# =========================================
+fast:
+  # 训练参数
+  n_epochs: 15          # 从50减少到15 (节省70%时间)
+  batch_size: 32        # 增加32以利用GPU并行
+  learning_rate: 0.001
+
+  # 模型参数 - 平衡精度和速度
+  hidden_dim: 32        # 保持32 (已优化)
+  num_layers: 2         # 保持2层
+
+  # 数据参数
+  n_grid: 64            # 从128减少到64 (节省75%空间计算)
+  n_samples: 10         # 从减少10个样本
+  dt: 0.01
+  nu: 0.003183098861837907  # 0.01/pi
+
+  # 预测参数
+  k_steps: 2            # 论文声称最优
+  horizon: 10           # 预测10个时间步
+  bdf_order: 2           # 论文声称最优
+  epsilon: 0.05         # 基准值
+
+  # 实验参数
+  seeds: [42]            # 单种子快速验证
+  n_val: 5              # 验证集大小
+  n_test: 5             # 测试集大小
+
+  # 敏感性分析范围 (缩减)
+  bdf_orders: [1, 2]        # 只测试1和2
+  epsilons: [0.0, 0.05, 0.1]  # 3个epsilon值
+
+  # 消融实验配置
+  ablation_configs:
+    - name: "Full_PGMNO"
+      use_multistep: true
+      use_bdf_loss: true
+      use_causal_weight: true
+      k_steps: 2
+
+    - name: "wo_Multistep"
+      use_multistep: false
+      use_bdf_loss: true
+      use_causal_weight: true
+      k_steps: 1
+
+    - name: "wo_BDF_Loss"
+      use_multistep: true
+      use_bdf_loss: false
+      use_causal_weight: true
+      k_steps: 2
+
+    - name: "wo_Causal_Weight"
+      use_multistep: true
+      use_bdf_loss: true
+      use_causal_weight: false
+      k_steps: 2
+      epsilon: 0.0
+
+  # 计算成本分析参数
+  profiling:
+    n_grid: [64, 96, 128]
+    batch_sizes: [16, 32, 64]
+    hidden_dims: [32, 48, 64]
+
+  # 优化选项
+  use_amp: true          # 混合精度训练 (加速1.5-2倍)
+  use_pregenerated: true # 使用预生成数据 (节省50-70%时间)
+  early_stop_patience: 15 # 早停耐心值
+
+# =========================================
+# 标准回复模式参数 
+# =========================================
+standard:
+  # 训练参数
+  n_epochs: 30          # 适中的训练轮数
+  batch_size: 32
+  learning_rate: 0.001
+
+  # 模型参数
+  hidden_dim: 48
+  num_layers: 3
+
+  # 数据参数
+  n_grid: 96            # 中等分辨率
+  n_samples: 20
+  dt: 0.01
+  nu: 0.003183098861837907
+
+  # 预测参数
+  k_steps: 2
+  horizon: 10
+  bdf_order: 2
+  epsilon: 0.05
+
+  # 实验参数
+  seeds: [42, 123]      # 双种子统计
+  n_val: 10
+  n_test: 10
+
+  # 敏感性分析范围
+  bdf_orders: [1, 2, 3]
+  epsilons: [0.0, 0.01, 0.05, 0.1, 0.2]
+
+  # 优化选项
+  use_amp: true
+  use_pregenerated: true
+  early_stop_patience: 20
+
+# =========================================
+# 完整实验模式参数 
+# =========================================
+full:
+  # 训练参数
+  n_epochs: 50
+  batch_size: 64
+  learning_rate: 0.001
+
+  # 模型参数
+  hidden_dim: 64
+  num_layers: 4
+
+  # 数据参数
+  n_grid: 128
+  n_samples: 100
+  dt: 0.01
+  nu: 0.003183098861837907
+
+  # 预测参数
+  k_steps: 2
+  horizon: 10
+  bdf_order: 2
+  epsilon: 0.05
+
+  # 实验参数
+  seeds: [42, 123, 456]  # 三种子统计
+  n_val: 20
+  n_test: 20
+
+  # 敏感性分析范围
+  bdf_orders: [1, 2, 3, 4]
+  epsilons: [0.0, 0.01, 0.05, 0.1, 0.2, 0.5]
+
+  # 优化选项
+  use_amp: true
+  use_pregenerated: true
+  early_stop_patience: 25
+  gradient_accumulation: 2  # 等效batch_size=128
+
+# =========================================
+# 骨干网络对比配置
+# =========================================
+backbone_comparison:
+  backbones: ["mamba", "transformer", "fno"]
+
+  # Mamba配置
+  mamba:
+    hidden_dim: 32
+    num_layers: 2
+
+  # Transformer配置
+  transformer:
+    hidden_dim: 32
+    num_layers: 2
+    n_heads: 4
+    d_ff: 128
+
+  # FNO配置
+  fno:
+    hidden_dim: 32
+    num_layers: 2
+    modes: 16
+
+# =========================================
+# 数据生成配置
+# =========================================
+data_generation:
+  method: "spectral"     # 'spectral' 或 'finite_difference'
+  noise_level: 0.0
+  x_range: [-1, 1]
+
+  # 预生成数据缓存
+  cache_dir: "data/pregenerated"
+  force_regenerate: false
+
+# =========================================
+# 输出配置
+# =========================================
+output:
+  results_dir: "results"
+  figures_dir: "results/figures"
+  log_dir: "logs"
+
+  # 报告格式
+  generate_markdown: true
+  generate_latex: false
+  generate_plots: true
+
+  # 日志
+  verbose: true
+  log_level: "INFO"
